@@ -19,7 +19,7 @@ jobs:
         run: streb --version 2>&1
 
       - name: Install Claude
-        run: curl -fsSL https://claude.ai/install.sh | bash
+        run: irm https://claude.ai/install.ps1 | iex
 
       - name: Run streb init
         env:
