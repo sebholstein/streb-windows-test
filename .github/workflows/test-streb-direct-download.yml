@@ -27,7 +27,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
+          streb init --skip-auth --skip-claude --skip-prereqs --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Show results
@@ -39,7 +39,14 @@ jobs:
           echo "=== .beads directory ==="
           Get-ChildItem -Recurse test-project\.beads -ErrorAction SilentlyContinue | Select-Object FullName
           echo ""
-          echo "=== bd version ==="
+          echo "=== bd in LOCALAPPDATA ==="
+          Get-ChildItem "$env:LOCALAPPDATA\beads" -ErrorAction SilentlyContinue
+          echo ""
+          echo "=== bd in npm global ==="
+          Get-ChildItem "$(npm prefix -g)\node_modules\@beads\bd\bin\bd.exe" -ErrorAction SilentlyContinue
+          echo ""
+          echo "=== bd version (try LOCALAPPDATA) ==="
+          $env:PATH = "$env:LOCALAPPDATA\beads;$env:PATH"
           bd version 2>&1
           echo ""
           echo "=== bd location ==="
