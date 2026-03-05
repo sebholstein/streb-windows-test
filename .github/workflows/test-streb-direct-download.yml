@@ -22,16 +22,13 @@ jobs:
         run: irm https://claude.ai/install.ps1 | iex
 
       - name: Run streb init
-        env:
-          CI: ""
-          STREB_AIHUB_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
           mkdir test-project
           cd test-project
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --headless --auth-method aihub --skip-prereqs --yes --no-color --verbose 2>&1
+          STREB_AIHUB_KEY=${{ secrets.AI_HUB_KEY }} streb init --ci --auth-method aihub --skip-prereqs --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Run claude
