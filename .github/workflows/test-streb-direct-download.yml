@@ -4,47 +4,52 @@ on: workflow_dispatch
 
 jobs:
   test-direct-download-fallback:
-    name: streb init (Ubuntu) - direct download fallback
-    runs-on: ubuntu-latest
+    name: streb init (Win + WSL) - direct download fallback
+    runs-on: windows-latest
     steps:
-      - name: Download test streb binary
-        run: |
-          curl -L -o /usr/local/bin/streb "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test"
-          chmod +x /usr/local/bin/streb
+      - name: Install WSL
+        run: wsl --install -d Ubuntu
 
-      - name: Verify streb binary
-        run: streb --version 2>&1
+      - name: Download test streb binary (WSL)
+        run: wsl -- Ubuntu bash -c "curl -L -o /usr/local/bin/streb 'https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test' && chmod +x /usr/local/bin/streb"
 
-      - name: Install Claude
-        run: curl -fsSL https://claude.ai/install.sh | bash
+      - name: Verify streb binary (WSL)
+        run: wsl -- Ubuntu streb --version 2>&1
 
-      - name: Run streb init
+      - name: Install Claude (WSL)
+        run: wsl -- Ubuntu bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+
+      - name: Run streb init (WSL)
         env:
           STREB_AIHUB_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
-          mkdir -p test-project
-          cd test-project
-          git init
-          git config user.email "test@test.com"
-          git config user.name "Test"
-          streb init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
+          wsl -- Ubuntu bash -c "
+            mkdir -p test-project
+            cd test-project
+            git init
+            git config user.email 'test@test.com'
+            git config user.name 'Test'
+            streb init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
+          "
         continue-on-error: true
 
-      - name: Run claude
+      - name: Run claude (WSL)
         if: always()
-        run: claude -p "test 123" 2>&1
+        run: wsl -- Ubuntu claude -p "test 123" 2>&1
 
-      - name: Show results
+      - name: Show results (WSL)
         if: always()
         run: |
-          echo "=== .claude directory ==="
-          find test-project/.claude -type f 2>/dev/null || echo "Not found"
-          echo ""
-          echo "=== .beads directory ==="
-          find test-project/.beads -type f 2>/dev/null || echo "Not found"
-          echo ""
-          echo "=== bd version ==="
-          bd version 2>&1 || echo "bd not found"
-          echo ""
-          echo "=== claude version ==="
-          claude --version 2>&1
+          wsl -- Ubuntu bash -c "
+            echo '=== .claude directory ==='
+            find test-project/.claude -type f 2>/dev/null || echo 'Not found'
+            echo ''
+            echo '=== .beads directory ==='
+            find test-project/.beads -type f 2>/dev/null || echo 'Not found'
+            echo ''
+            echo '=== bd version ==='
+            bd version 2>&1 || echo 'bd not found'
+            echo ''
+            echo '=== claude version ==='
+            claude --version 2>&1
+          "
