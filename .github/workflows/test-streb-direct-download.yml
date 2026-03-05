@@ -30,7 +30,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --headless --auth-method aihub --skip-prereqs --skip-claude --yes --no-color --verbose 2>&1
+          streb init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Run claude
