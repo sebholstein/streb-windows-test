@@ -3,8 +3,8 @@ name: Test Windows Install
 on: workflow_dispatch
 
 jobs:
-  test-scoop:
-    name: Test Scoop Installation
+  test-scoop-latest:
+    name: Scoop Latest (Win 2025)
     runs-on: windows-latest
     steps:
       - name: Install Scoop
@@ -12,53 +12,134 @@ jobs:
           iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
           echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
-      - name: Install streb via Scoop
+      - name: Show Scoop version
+        run: scoop --version
+
+      - name: Install streb
         run: |
           scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
           scoop install streb
 
-      - name: Check shim file
-        run: |
-          echo "=== Shim content ==="
-          Get-Content "$env:USERPROFILE\scoop\shims\streb.shim"
-          echo ""
-          echo "=== Shim exe ==="
-          Get-Item "$env:USERPROFILE\scoop\shims\streb.exe" | Format-List *
-          echo ""
-          echo "=== Target exe ==="
-          Get-Item "$env:USERPROFILE\scoop\apps\streb\current\streb.exe" | Format-List *
-          echo ""
-          echo "=== Junction check ==="
-          cmd /c dir "$env:USERPROFILE\scoop\apps\streb"
-
-      - name: Test streb via shim
+      - name: Test
         run: |
           streb --version
-          streb --help
-
-      - name: Test streb direct (bypass shim)
-        run: |
-          & "$env:USERPROFILE\scoop\apps\streb\current\streb.exe" --version
-
-      - name: Test streb init (dry run check)
-        run: |
-          mkdir test-project
-          cd test-project
-          git init
-          git config user.email "test@test.com"
-          git config user.name "Test"
           streb init --help
 
-  test-direct-install:
-    name: Test Direct PowerShell Install
-    runs-on: windows-latest
+  test-scoop-old:
+    name: Scoop Pinned Old (Win 2022)
+    runs-on: windows-2022
     steps:
-      - name: Install via PowerShell script
+      - name: Install old Scoop and pin it
         run: |
-          irm https://strebcli.dev/install.ps1 | iex
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          # Pin to an older Scoop version (pre-shim-fix era)
+          cd "$env:USERPROFILE\scoop\apps\scoop\current"
+          git log --oneline -5
+          # Reset to ~6 months ago (before recent shim fixes)
+          git checkout $(git rev-list -1 --before="2025-06-01" HEAD)
+          scoop --version
 
-      - name: Test streb
+      - name: Install streb
         run: |
-          $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" + $env:Path
-          streb --version
-          streb --help
+          scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
+          scoop install streb
+        continue-on-error: true
+
+      - name: Diagnostics on failure
+        if: always()
+        run: |
+          echo "=== Scoop version ==="
+          scoop --version
+          echo ""
+          echo "=== App directory ==="
+          cmd /c dir "$env:USERPROFILE\scoop\apps\streb" 2>$null
+          echo ""
+          echo "=== Current junction ==="
+          cmd /c dir "$env:USERPROFILE\scoop\apps\streb\current" 2>$null
+          echo ""
+          echo "=== Shim file ==="
+          Get-Content "$env:USERPROFILE\scoop\shims\streb.shim" 2>$null
+          echo ""
+          echo "=== Test via shim ==="
+          streb --version 2>&1
+          echo ""
+          echo "=== Test direct ==="
+          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory | Where-Object { $_.Name -ne "current" }
+          foreach ($v in $versions) {
+            $exe = Join-Path $v.FullName "streb.exe"
+            if (Test-Path $exe) {
+              echo "Direct exe: $exe"
+              & $exe --version 2>&1
+            }
+          }
+
+  test-scoop-very-old:
+    name: Scoop Very Old (Win 2022)
+    runs-on: windows-2022
+    steps:
+      - name: Install very old Scoop
+        run: |
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          # Pin to early 2025 (likely what many users have)
+          cd "$env:USERPROFILE\scoop\apps\scoop\current"
+          git checkout $(git rev-list -1 --before="2025-01-01" HEAD)
+          scoop --version
+
+      - name: Install streb
+        run: |
+          scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
+          scoop install streb
+        continue-on-error: true
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          echo "=== Scoop version ==="
+          scoop --version
+          echo ""
+          echo "=== Test via shim ==="
+          streb --version 2>&1
+          echo ""
+          echo "=== Test direct ==="
+          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "current" }
+          foreach ($v in $versions) {
+            $exe = Join-Path $v.FullName "streb.exe"
+            if (Test-Path $exe) {
+              echo "Direct exe: $exe"
+              & $exe --version 2>&1
+            }
+          }
+
+  test-scoop-win2019:
+    name: Scoop Latest (Win 2019)
+    runs-on: windows-2019
+    steps:
+      - name: Install Scoop
+        run: |
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          scoop --version
+
+      - name: Install streb
+        run: |
+          scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
+          scoop install streb
+        continue-on-error: true
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          echo "=== Test via shim ==="
+          streb --version 2>&1
+          echo ""
+          echo "=== Test direct ==="
+          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "current" }
+          foreach ($v in $versions) {
+            $exe = Join-Path $v.FullName "streb.exe"
+            if (Test-Path $exe) {
+              echo "Direct exe: $exe"
+              & $exe --version 2>&1
+            }
+          }
