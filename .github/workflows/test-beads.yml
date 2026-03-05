@@ -1,0 +1,82 @@
+name: Test Beads Install on Windows
+
+on: workflow_dispatch
+
+jobs:
+  test-beads-npm:
+    name: Beads npm install (Win 2025)
+    runs-on: windows-latest
+    steps:
+      - name: Node version
+        run: node --version
+
+      - name: Install @beads/bd via npm
+        env:
+          CI: ""
+        run: |
+          npm install -g @beads/bd 2>&1
+
+      - name: Check bd binary
+        if: always()
+        run: |
+          echo "=== npm global prefix ==="
+          npm prefix -g
+          echo ""
+          echo "=== Look for bd files ==="
+          Get-ChildItem -Recurse "$(npm prefix -g)\node_modules\@beads\bd\bin" -ErrorAction SilentlyContinue
+          echo ""
+          echo "=== bd version ==="
+          bd version 2>&1
+
+  test-beads-npm-workaround:
+    name: Beads npm + manual extract (Win 2025)
+    runs-on: windows-latest
+    steps:
+      - name: Install @beads/bd skipping postinstall
+        run: |
+          npm install -g --ignore-scripts @beads/bd 2>&1
+
+      - name: Download and extract bd.exe manually
+        run: |
+          $version = (Get-Content "$(npm prefix -g)\node_modules\@beads\bd\package.json" | ConvertFrom-Json).version
+          echo "Beads version: $version"
+          $url = "https://github.com/steveyegge/beads/releases/download/v${version}/beads_${version}_windows_amd64.zip"
+          echo "Downloading: $url"
+          $binDir = "$(npm prefix -g)\node_modules\@beads\bd\bin"
+          $zipPath = "$binDir\beads.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
+          echo "Downloaded. Extracting..."
+          Expand-Archive -Path $zipPath -DestinationPath $binDir -Force
+          Remove-Item $zipPath
+          echo "=== Contents ==="
+          Get-ChildItem $binDir
+
+      - name: Test bd
+        run: bd version 2>&1
+
+  test-beads-direct-download:
+    name: Beads direct download (Win 2025)
+    runs-on: windows-latest
+    steps:
+      - name: Download bd.exe directly
+        run: |
+          $url = "https://github.com/steveyegge/beads/releases/download/v0.58.0/beads_0.58.0_windows_amd64.zip"
+          $tempDir = "$env:TEMP\beads-install"
+          $installDir = "$env:LOCALAPPDATA\beads"
+          New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+          New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+
+          echo "Downloading from $url..."
+          Invoke-WebRequest -Uri $url -OutFile "$tempDir\beads.zip" -UseBasicParsing
+          echo "Extracting..."
+          Expand-Archive -Path "$tempDir\beads.zip" -DestinationPath $installDir -Force
+          Remove-Item -Recurse $tempDir
+
+          echo "=== Contents ==="
+          Get-ChildItem $installDir
+          echo ""
+          echo "Adding to PATH..."
+          echo "$installDir" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Test bd
+        run: bd version 2>&1
