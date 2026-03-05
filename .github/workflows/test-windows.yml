@@ -31,17 +31,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --skip-auth --skip-claude --skip-beads --skip-bdui --skip-plugins --skip-dagger --skip-container-use --skip-ralph --skip-jira --yes --no-color --verbose 2>&1
-        continue-on-error: true
-
-      - name: Run streb init minimal profile
-        run: |
-          mkdir test-project-minimal
-          cd test-project-minimal
-          git init
-          git config user.email "test@test.com"
-          git config user.name "Test"
-          streb init --profile minimal --skip-auth --skip-claude --skip-beads --skip-bdui --skip-plugins --skip-dagger --skip-container-use --skip-ralph --skip-jira --yes --no-color --verbose 2>&1
+          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
 
   test-scoop-old:
@@ -76,7 +66,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --skip-auth --skip-claude --skip-beads --skip-bdui --skip-plugins --skip-dagger --skip-container-use --skip-ralph --skip-jira --yes --no-color --verbose 2>&1
+          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Diagnostics
@@ -135,7 +125,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --skip-auth --skip-claude --skip-beads --skip-bdui --skip-plugins --skip-dagger --skip-container-use --skip-ralph --skip-jira --yes --no-color --verbose 2>&1
+          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Diagnostics
@@ -186,7 +176,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --skip-auth --skip-claude --skip-beads --skip-bdui --skip-plugins --skip-dagger --skip-container-use --skip-ralph --skip-jira --yes --no-color --verbose 2>&1
+          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Diagnostics
