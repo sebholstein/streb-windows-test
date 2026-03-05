@@ -18,10 +18,10 @@ jobs:
           $installDir = "$env:LOCALAPPDATA\streb-test"
           New-Item -ItemType Directory -Path $installDir -Force | Out-Null
           Invoke-WebRequest -Uri $url -OutFile "$installDir\streb.exe" -UseBasicParsing
-          echo "$installDir" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Verify streb binary
-        run: wsl -- Ubuntu /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe --version 2>&1
+        shell: wsl-bash {0}
+        run: /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe --version 2>&1
 
       - name: Install Claude (WSL)
         shell: wsl-bash {0}
