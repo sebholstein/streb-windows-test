@@ -70,6 +70,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
+          set +u
           export PATH="$HOME/.local/bin:$PATH"
           export ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
           export ANTHROPIC_BASE_URL="https://adesso-ai-hub.3asabc.de"
@@ -81,6 +82,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
+          set +u
           export PATH="$HOME/.local/bin:$PATH"
           export ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
           export ANTHROPIC_BASE_URL="https://adesso-ai-hub.3asabc.de"
