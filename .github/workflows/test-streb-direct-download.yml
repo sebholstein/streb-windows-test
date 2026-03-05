@@ -43,6 +43,13 @@ jobs:
           /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
         continue-on-error: true
 
+      - name: Verify aihub key saved (WSL)
+        if: always()
+        shell: wsl-bash {0}
+        run: |
+          echo "AIHUB key character count:"
+          cat ~/.streb/aihub-key 2>/dev/null | wc -c || echo "File not found"
+
       - name: Run claude (WSL)
         if: always()
         shell: wsl-bash {0}
