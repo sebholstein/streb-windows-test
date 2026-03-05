@@ -18,6 +18,9 @@ jobs:
       - name: Verify streb binary
         run: streb --version 2>&1
 
+      - name: Install Claude
+        run: curl -fsSL https://claude.ai/install.sh | bash
+
       - name: Run streb init
         env:
           CI: ""
