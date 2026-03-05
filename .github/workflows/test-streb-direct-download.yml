@@ -19,7 +19,9 @@ jobs:
         run: streb --version 2>&1
 
       - name: Install Claude
-        run: irm https://claude.ai/install.ps1 | iex
+        run: |
+          irm https://claude.ai/install.ps1 | iex
+          echo "C:\Users\runneradmin\.local\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Run streb init
         env:
