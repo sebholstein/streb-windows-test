@@ -1,0 +1,46 @@
+name: Test streb init with direct download fallback
+
+on: workflow_dispatch
+
+jobs:
+  test-direct-download-fallback:
+    name: streb init (Win 2025) - direct download fallback
+    runs-on: windows-latest
+    steps:
+      - name: Download test streb binary
+        run: |
+          $url = "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test.exe"
+          $installDir = "$env:LOCALAPPDATA\streb-test"
+          New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+          Invoke-WebRequest -Uri $url -OutFile "$installDir\streb.exe" -UseBasicParsing
+          echo "$installDir" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Verify streb binary
+        run: streb --version 2>&1
+
+      - name: Run streb init
+        env:
+          CI: ""
+        run: |
+          mkdir test-project
+          cd test-project
+          git init
+          git config user.email "test@test.com"
+          git config user.name "Test"
+          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
+        continue-on-error: true
+
+      - name: Show results
+        if: always()
+        run: |
+          echo "=== .claude directory ==="
+          Get-ChildItem -Recurse test-project\.claude -ErrorAction SilentlyContinue | Select-Object FullName
+          echo ""
+          echo "=== .beads directory ==="
+          Get-ChildItem -Recurse test-project\.beads -ErrorAction SilentlyContinue | Select-Object FullName
+          echo ""
+          echo "=== bd version ==="
+          bd version 2>&1
+          echo ""
+          echo "=== bd location ==="
+          Get-Command bd -ErrorAction SilentlyContinue | Select-Object Source
