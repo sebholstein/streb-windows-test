@@ -12,15 +12,16 @@ jobs:
         with:
           distribution: Ubuntu-22.04
 
-      - name: Download test streb binary (WSL)
-        shell: wsl-bash {0}
+      - name: Download test streb binary
         run: |
-          curl -L -o /usr/local/bin/streb "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test"
-          chmod +x /usr/local/bin/streb
+          $url = "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test.exe"
+          $installDir = "$env:LOCALAPPDATA\streb-test"
+          New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+          Invoke-WebRequest -Uri $url -OutFile "$installDir\streb.exe" -UseBasicParsing
+          echo "$installDir" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
-      - name: Verify streb binary (WSL)
-        shell: wsl-bash {0}
-        run: streb --version 2>&1
+      - name: Verify streb binary
+        run: wsl -- Ubuntu /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe --version 2>&1
 
       - name: Install Claude (WSL)
         shell: wsl-bash {0}
@@ -36,7 +37,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          streb init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
+          /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Run claude (WSL)
