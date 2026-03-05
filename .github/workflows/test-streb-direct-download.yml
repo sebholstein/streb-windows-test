@@ -4,30 +4,25 @@ on: workflow_dispatch
 
 jobs:
   test-direct-download-fallback:
-    name: streb init (Win 2025) - direct download fallback
-    runs-on: windows-latest
+    name: streb init (Ubuntu) - direct download fallback
+    runs-on: ubuntu-latest
     steps:
       - name: Download test streb binary
         run: |
-          $url = "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test.exe"
-          $installDir = "$env:LOCALAPPDATA\streb-test"
-          New-Item -ItemType Directory -Path $installDir -Force | Out-Null
-          Invoke-WebRequest -Uri $url -OutFile "$installDir\streb.exe" -UseBasicParsing
-          echo "$installDir" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          curl -L -o /usr/local/bin/streb "https://github.com/sebholstein/streb-windows-test/releases/download/test-v1/streb-test"
+          chmod +x /usr/local/bin/streb
 
       - name: Verify streb binary
         run: streb --version 2>&1
 
       - name: Install Claude
-        run: |
-          irm https://claude.ai/install.ps1 | iex
-          echo "C:\Users\runneradmin\.local\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+        run: curl -fsSL https://claude.ai/install.sh | bash
 
       - name: Run streb init
         env:
           STREB_AIHUB_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
-          mkdir test-project
+          mkdir -p test-project
           cd test-project
           git init
           git config user.email "test@test.com"
@@ -43,20 +38,13 @@ jobs:
         if: always()
         run: |
           echo "=== .claude directory ==="
-          Get-ChildItem -Recurse test-project\.claude -ErrorAction SilentlyContinue | Select-Object FullName
+          find test-project/.claude -type f 2>/dev/null || echo "Not found"
           echo ""
           echo "=== .beads directory ==="
-          Get-ChildItem -Recurse test-project\.beads -ErrorAction SilentlyContinue | Select-Object FullName
+          find test-project/.beads -type f 2>/dev/null || echo "Not found"
           echo ""
-          echo "=== bd in LOCALAPPDATA ==="
-          Get-ChildItem "$env:LOCALAPPDATA\beads" -ErrorAction SilentlyContinue
+          echo "=== bd version ==="
+          bd version 2>&1 || echo "bd not found"
           echo ""
-          echo "=== bd in npm global ==="
-          Get-ChildItem "$(npm prefix -g)\node_modules\@beads\bd\bin\bd.exe" -ErrorAction SilentlyContinue
-          echo ""
-          echo "=== bd version (try LOCALAPPDATA) ==="
-          $env:PATH = "$env:LOCALAPPDATA\beads;$env:PATH"
-          bd version 2>&1
-          echo ""
-          echo "=== bd location ==="
-          Get-Command bd -ErrorAction SilentlyContinue | Select-Object Source
+          echo "=== claude version ==="
+          claude --version 2>&1
