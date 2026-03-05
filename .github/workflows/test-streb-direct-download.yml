@@ -53,15 +53,15 @@ jobs:
       - name: Configure AI-Hub for Claude (WSL)
         if: always()
         shell: wsl-bash {0}
-        env:
-          AI_HUB_KEY: ${{ secrets.AI_HUB_KEY }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           mkdir -p ~/.claude
-          printf '{"apiKey": "env:ANTHROPIC_API_KEY", "env": {"ANTHROPIC_BASE_URL": "https://adesso-ai-hub.3asabc.de", "ANTHROPIC_API_KEY": "env:ANTHROPIC_API_KEY"}}\n' > ~/.claude/settings.json
-          echo "ANTHROPIC_API_KEY=$AI_HUB_KEY" >> ~/.bashrc
-          echo "ANTHROPIC_BASE_URL=https://adesso-ai-hub.3asabc.de" >> ~/.bashrc
+          printf '{"apiKey": "%s", "env": {"ANTHROPIC_BASE_URL": "https://adesso-ai-hub.3asabc.de", "ANTHROPIC_API_KEY": "%s"}}\n' "$ANTHROPIC_API_KEY" "$ANTHROPIC_API_KEY" > ~/.claude/settings.json
+          echo "export ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> ~/.bashrc
+          echo "export ANTHROPIC_BASE_URL=https://adesso-ai-hub.3asabc.de" >> ~/.bashrc
           echo "Configured AI-Hub settings.json"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.AI_HUB_KEY }}
 
       - name: Run claude (WSL)
         if: always()
