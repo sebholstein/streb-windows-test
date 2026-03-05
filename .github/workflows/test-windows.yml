@@ -21,10 +21,11 @@ jobs:
           scoop install streb
 
       - name: Test streb binary
-        run: |
-          streb --version
+        run: streb --version
 
       - name: Run streb init
+        env:
+          CI: ""
         run: |
           mkdir test-project
           cd test-project
@@ -33,6 +34,21 @@ jobs:
           git config user.name "Test"
           streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
         continue-on-error: true
+
+      - name: Show init results
+        if: always()
+        run: |
+          echo "=== .claude directory ==="
+          Get-ChildItem -Recurse test-project\.claude -ErrorAction SilentlyContinue | Select-Object FullName
+          echo ""
+          echo "=== .beads directory ==="
+          Get-ChildItem -Recurse test-project\.beads -ErrorAction SilentlyContinue | Select-Object FullName
+          echo ""
+          echo "=== bd version ==="
+          bd version 2>&1
+          echo ""
+          echo "=== bdui version ==="
+          bdui --version 2>&1
 
   test-scoop-old:
     name: Scoop Pinned Old (Win 2022)
@@ -60,6 +76,8 @@ jobs:
 
       - name: Run streb init
         if: always()
+        env:
+          CI: ""
         run: |
           mkdir test-project
           cd test-project
@@ -75,24 +93,14 @@ jobs:
           echo "=== Scoop version ==="
           scoop --version
           echo ""
-          echo "=== App directory ==="
-          cmd /c dir "$env:USERPROFILE\scoop\apps\streb" 2>$null
-          echo ""
-          echo "=== Current junction ==="
-          cmd /c dir "$env:USERPROFILE\scoop\apps\streb\current" 2>$null
-          echo ""
           echo "=== Shim file ==="
           Get-Content "$env:USERPROFILE\scoop\shims\streb.shim" 2>$null
           echo ""
-          echo "=== Test direct exe ==="
-          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "current" }
-          foreach ($v in $versions) {
-            $exe = Join-Path $v.FullName "streb.exe"
-            if (Test-Path $exe) {
-              echo "Direct exe: $exe"
-              & $exe --version 2>&1
-            }
-          }
+          echo "=== bd version ==="
+          bd version 2>&1
+          echo ""
+          echo "=== .claude directory ==="
+          Get-ChildItem -Recurse test-project\.claude -ErrorAction SilentlyContinue | Select-Object FullName
 
   test-scoop-very-old:
     name: Scoop Very Old (Win 2022)
@@ -119,6 +127,8 @@ jobs:
 
       - name: Run streb init
         if: always()
+        env:
+          CI: ""
         run: |
           mkdir test-project
           cd test-project
@@ -134,63 +144,8 @@ jobs:
           echo "=== Scoop version ==="
           scoop --version
           echo ""
-          echo "=== Test via shim ==="
-          streb --version 2>&1
+          echo "=== bd version ==="
+          bd version 2>&1
           echo ""
-          echo "=== Test direct ==="
-          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "current" }
-          foreach ($v in $versions) {
-            $exe = Join-Path $v.FullName "streb.exe"
-            if (Test-Path $exe) {
-              echo "Direct exe: $exe"
-              & $exe --version 2>&1
-            }
-          }
-
-  test-scoop-win2019:
-    name: Scoop Latest (Win 2019)
-    runs-on: windows-2019
-    steps:
-      - name: Install Scoop
-        run: |
-          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
-          echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-          scoop --version
-
-      - name: Install streb
-        run: |
-          scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
-          scoop install streb
-        continue-on-error: true
-
-      - name: Test streb binary
-        if: always()
-        run: streb --version 2>&1
-        continue-on-error: true
-
-      - name: Run streb init
-        if: always()
-        run: |
-          mkdir test-project
-          cd test-project
-          git init
-          git config user.email "test@test.com"
-          git config user.name "Test"
-          streb init --skip-auth --skip-claude --yes --no-color --verbose 2>&1
-        continue-on-error: true
-
-      - name: Diagnostics
-        if: always()
-        run: |
-          echo "=== Test via shim ==="
-          streb --version 2>&1
-          echo ""
-          echo "=== Test direct ==="
-          $versions = Get-ChildItem "$env:USERPROFILE\scoop\apps\streb" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "current" }
-          foreach ($v in $versions) {
-            $exe = Join-Path $v.FullName "streb.exe"
-            if (Test-Path $exe) {
-              echo "Direct exe: $exe"
-              & $exe --version 2>&1
-            }
-          }
+          echo "=== .claude directory ==="
+          Get-ChildItem -Recurse test-project\.claude -ErrorAction SilentlyContinue | Select-Object FullName
