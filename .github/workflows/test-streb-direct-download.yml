@@ -23,12 +23,6 @@ jobs:
         shell: wsl-bash {0}
         run: /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe --version 2>&1
 
-      - name: Install Claude (WSL)
-        shell: wsl-bash {0}
-        run: |
-          curl -fsSL https://claude.ai/install.sh | bash
-          echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-
       - name: Run streb init (WSL)
         env:
           STREB_AIHUB_KEY: ${{ secrets.AI_HUB_KEY }}
@@ -40,7 +34,7 @@ jobs:
           git init
           git config user.email "test@test.com"
           git config user.name "Test"
-          /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe init --headless --auth-method aihub --skip-prereqs --skip-claude --skip-beads --yes --no-color --verbose 2>&1
+          /mnt/c/Users/runneradmin/AppData/Local/streb-test/streb.exe init --headless --auth-method aihub --skip-prereqs --skip-beads --yes --no-color --verbose 2>&1
         continue-on-error: true
 
       - name: Run claude (WSL)
