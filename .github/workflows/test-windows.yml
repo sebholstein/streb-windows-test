@@ -1,0 +1,64 @@
+name: Test Windows Install
+
+on: workflow_dispatch
+
+jobs:
+  test-scoop:
+    name: Test Scoop Installation
+    runs-on: windows-latest
+    steps:
+      - name: Install Scoop
+        run: |
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          echo "$env:USERPROFILE\scoop\shims" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Install streb via Scoop
+        run: |
+          scoop bucket add streb https://github.com/adesso-ai/homebrew-streb
+          scoop install streb
+
+      - name: Check shim file
+        run: |
+          echo "=== Shim content ==="
+          Get-Content "$env:USERPROFILE\scoop\shims\streb.shim"
+          echo ""
+          echo "=== Shim exe ==="
+          Get-Item "$env:USERPROFILE\scoop\shims\streb.exe" | Format-List *
+          echo ""
+          echo "=== Target exe ==="
+          Get-Item "$env:USERPROFILE\scoop\apps\streb\current\streb.exe" | Format-List *
+          echo ""
+          echo "=== Junction check ==="
+          cmd /c dir "$env:USERPROFILE\scoop\apps\streb"
+
+      - name: Test streb via shim
+        run: |
+          streb --version
+          streb --help
+
+      - name: Test streb direct (bypass shim)
+        run: |
+          & "$env:USERPROFILE\scoop\apps\streb\current\streb.exe" --version
+
+      - name: Test streb init (dry run check)
+        run: |
+          mkdir test-project
+          cd test-project
+          git init
+          git config user.email "test@test.com"
+          git config user.name "Test"
+          streb init --help
+
+  test-direct-install:
+    name: Test Direct PowerShell Install
+    runs-on: windows-latest
+    steps:
+      - name: Install via PowerShell script
+        run: |
+          irm https://strebcli.dev/install.ps1 | iex
+
+      - name: Test streb
+        run: |
+          $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" + $env:Path
+          streb --version
+          streb --help
